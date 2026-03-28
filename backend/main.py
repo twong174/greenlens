@@ -8,7 +8,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["http://localhost:5173", "http://localhost:5176"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -19,6 +19,46 @@ class Claim(BaseModel):
     location: str
     year_start: int
     year_end: int
+
+
+# Mock satellite data for demo companies — keyed by company name (lowercase)
+MOCK_DATA = {
+    "amazon": {
+        "avg_loss_before_ha": 48200,
+        "avg_loss_after_ha": 51400,
+        "reduction_ha": -3200,
+        "truth_score": 12.0,
+        "verdict": "likely_false",
+    },
+    "apple": {
+        "avg_loss_before_ha": 12000,
+        "avg_loss_after_ha": 7800,
+        "reduction_ha": 4200,
+        "truth_score": 58.0,
+        "verdict": "uncertain",
+    },
+    "microsoft": {
+        "avg_loss_before_ha": 31000,
+        "avg_loss_after_ha": 5800,
+        "reduction_ha": 25200,
+        "truth_score": 84.0,
+        "verdict": "verified",
+    },
+    "meta": {
+        "avg_loss_before_ha": 22000,
+        "avg_loss_after_ha": 19500,
+        "reduction_ha": 2500,
+        "truth_score": 31.0,
+        "verdict": "likely_false",
+    },
+    "exxon mobil": {
+        "avg_loss_before_ha": 9800,
+        "avg_loss_after_ha": 10200,
+        "reduction_ha": -400,
+        "truth_score": 5.0,
+        "verdict": "likely_false",
+    },
+}
 
 
 def geocode_location(location: str):
@@ -98,6 +138,17 @@ def root():
 
 @app.post("/verify")
 async def verify(claim: Claim):
+    mock = MOCK_DATA.get(claim.company.lower())
+    if mock:
+        return {
+            "company": claim.company,
+            "location": claim.location,
+            "claimed_hectares": claim.claimed_hectares,
+            "year_start": claim.year_start,
+            "year_end": claim.year_end,
+            **mock,
+        }
+
     bbox = geocode_location(claim.location)
     loss_rows = await query_gfw_loss(bbox, claim.year_start, claim.year_end)
     result = compute_truth_score(loss_rows, claim.year_start, claim.claimed_hectares)
