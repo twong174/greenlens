@@ -3,8 +3,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import httpx
 from geopy.geocoders import Nominatim
+from routers.analyze_router import router
 
 app = FastAPI()
+
+app.include_router(router)
 
 app.add_middleware(
     CORSMiddleware,
@@ -21,7 +24,6 @@ class Claim(BaseModel):
     year_end: int
 
 
-# Mock satellite data for demo companies — keyed by company name (lowercase)
 MOCK_DATA = {
     "amazon": {
         "avg_loss_before_ha": 48200,
@@ -66,7 +68,7 @@ def geocode_location(location: str):
     loc = geolocator.geocode(location)
     if not loc:
         raise HTTPException(status_code=400, detail=f"Could not geocode location: {location}")
-    # Build a bounding box ~1 degree around the point
+
     lat, lon = loc.latitude, loc.longitude
     return {
         "min_lat": lat - 1,
@@ -95,25 +97,30 @@ async def query_gfw_loss(bbox: dict, year_start: int, year_end: int):
             [bbox["min_lon"], bbox["min_lat"]],
         ]]
     }
+
     async with httpx.AsyncClient(timeout=30) as client:
         resp = await client.post(url, json={"sql": sql, "geometry": geometry})
         resp.raise_for_status()
-        return resp.json().get("data", [])
+        body = resp.json()
+        return body.get("data", [])
 
 
 def compute_truth_score(loss_rows: list, year_start: int, claimed_hectares: float):
     if not loss_rows:
         return None
 
+    if claimed_hectares <= 0:
+        raise HTTPException(status_code=400, detail="claimed_hectares must be greater than 0")
+
     midpoint = year_start + (loss_rows[-1]["umd_tree_cover_loss__year"] - year_start) // 2
     before = [r for r in loss_rows if r["umd_tree_cover_loss__year"] <= midpoint]
-    after  = [r for r in loss_rows if r["umd_tree_cover_loss__year"] >  midpoint]
+    after = [r for r in loss_rows if r["umd_tree_cover_loss__year"] > midpoint]
 
     avg_before = sum(r["loss_ha"] for r in before) / len(before) if before else 0
-    avg_after  = sum(r["loss_ha"] for r in after)  / len(after)  if after  else 0
+    avg_after = sum(r["loss_ha"] for r in after) / len(after) if after else 0
 
-    reduction = avg_before - avg_after  # positive = deforestation slowed
-    score = min(max(reduction / claimed_hectares * 100, 0), 100)
+    reduction = avg_before - avg_after
+    score = min(max((reduction / claimed_hectares) * 100, 0), 100)
 
     if score >= 80:
         verdict = "verified"
