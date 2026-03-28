@@ -19,7 +19,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<LandingPage />} />
-        <Route path="/companypage" element={<CompanyPage />} />
+        <Route path="/company/:name" element={<CompanyPage />} />
       </Routes>
     </BrowserRouter>
   );
