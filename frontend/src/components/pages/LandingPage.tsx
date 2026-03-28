@@ -1,5 +1,8 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import SearchIcon from "@mui/icons-material/Search";
+import SatelliteComparison from "../SatelliteComparison";
+import SpaIcon from "@mui/icons-material/Spa";
 
 const LandingPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -36,24 +39,29 @@ const LandingPage = () => {
 
   return (
     <div className="h-screen w-full grid grid-rows-[auto_1fr] p-4">
-      <h1 className="uppercase font-medium text-xl">GreenLens</h1>
-      <div className="flex flex-col items-center justify-center gap-4">
+      <Link to="/" className="flex items-center gap-0.5">
+        <SpaIcon fontSize="small" className="text-emerald-800" />
+        <h1 className=" font-semibold text-xl text-emerald-800">GreenLens</h1>
+      </Link>{" "}
+      <div className="flex flex-col items-center justify-center gap-15">
+
+        <h1 className="text-6xl font-medium text-center">Don't take their word for it — Search any company to verify their environmental claims</h1>
         <div className="flex items-center gap-1">
-          <div className="border rounded-md flex items-center gap-1 px-2">
-            <SearchIcon fontSize="small" className="text-gray-400" />
+          <div className="border rounded-xs flex items-center gap-0.5 px-1">
+            <SearchIcon fontSize="inherit" className="text-gray-400" />
             <input
               type="text"
-              placeholder="Search..."
+              placeholder="Enter Company Name..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-              className="focus:outline-none text-xs p-2"
+              className="focus:outline-none text-xs p-1"
             />
           </div>
           <button
             type="submit"
             onClick={handleSearch}
-            className="text-white bg-green-500 rounded-md px-3 py-2 cursor-pointer text-xs"
+            className="text-white bg-emerald-800 rounded-xs px-2 py-1 cursor-pointer text-xs"
           >
             Search
           </button>
@@ -62,9 +70,12 @@ const LandingPage = () => {
         {loading && <p className="text-xs text-gray-400">Loading...</p>}
         {error && <p className="text-xs text-red-500">{error}</p>}
         {result && (
-          <pre className="text-xs text-left bg-gray-100 p-4 rounded-md">
-            {JSON.stringify(result, null, 2)}
-          </pre>
+          <>
+            <pre className="text-xs text-left bg-gray-100 p-4 rounded-xs">
+              {JSON.stringify(result, null, 2)}
+            </pre>
+            <SatelliteComparison />
+          </>
         )}
       </div>
     </div>
