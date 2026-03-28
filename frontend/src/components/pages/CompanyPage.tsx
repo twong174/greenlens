@@ -69,6 +69,16 @@ const CompanyPage = () => {
           {claim && (
             <h3 className="text-sm text-gray-600">{claim.claim_summary}</h3>
           )}
+          {claim?.source_url && (
+            <a
+              href={claim.source_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-emerald-700 underline underline-offset-2 w-fit"
+            >
+              Source ↗
+            </a>
+          )}
         </div>
 
         <div className="grid grid-rows-2 gap-2 overflow-hidden">
