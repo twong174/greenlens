@@ -1,38 +1,31 @@
-# backend/routers/analyze_router.py
-
 from fastapi import APIRouter, HTTPException
-from services.vector_pipeline import analyze_pdf
-import os
+from pydantic import BaseModel
+
+from services.source_pipeline import analyze_company, select_best_source
 
 router = APIRouter()
 
 
-@router.post("/analyze")
-def analyze(company: dict):
-    company_name = company.get("company", "").lower().strip()
+class CompanyRequest(BaseModel):
+    company: str
 
-    if not company_name:
-        raise HTTPException(status_code=400, detail="Missing company name")
 
-    folder = "data/reports"
+@router.get("/health")
+def health_check():
+    return {"status": "ok"}
 
-    if not os.path.exists(folder):
-        raise HTTPException(status_code=500, detail="data/reports folder not found")
 
-    file = None
-    for f in os.listdir(folder):
-        if f.lower().startswith(company_name):
-            file = f
-            break
+@router.post("/select-best-source")
+def select_best_source_route(payload: CompanyRequest):
+    try:
+        return select_best_source(payload.company)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
 
-    if not file:
-        raise HTTPException(status_code=404, detail="PDF not found")
 
-    pdf_path = os.path.join(folder, file)
-    extracted = analyze_pdf(pdf_path, company_name)
-
-    return {
-        "company": company_name,
-        "file_used": file,
-        **extracted
-    }
+@router.post("/analyze-company")
+def analyze_company_route(payload: CompanyRequest):
+    try:
+        return analyze_company(payload.company)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
