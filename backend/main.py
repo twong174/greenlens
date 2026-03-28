@@ -2,8 +2,15 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import httpx
+import json
+import os
 from geopy.geocoders import Nominatim
+from openai import AsyncOpenAI
+from dotenv import load_dotenv
 from routers.analyze_router import router
+
+load_dotenv()
+openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 app = FastAPI()
 
@@ -22,6 +29,19 @@ class Claim(BaseModel):
     location: str
     year_start: int
     year_end: int
+
+class ExplainRequest(BaseModel):
+    company: str
+    claim_summary: str | None = None
+    location: str
+    claimed_hectares: float
+    year_start: int
+    year_end: int
+    truth_score: float
+    verdict: str
+    avg_loss_before_ha: float
+    avg_loss_after_ha: float
+    reduction_ha: float
 
 
 MOCK_DATA = {
@@ -98,7 +118,7 @@ async def query_gfw_loss(bbox: dict, year_start: int, year_end: int):
         ]]
     }
 
-    async with httpx.AsyncClient(timeout=30) as client:
+    async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
         resp = await client.post(url, json={"sql": sql, "geometry": geometry})
         resp.raise_for_status()
         body = resp.json()
@@ -141,6 +161,91 @@ def compute_truth_score(loss_rows: list, year_start: int, claimed_hectares: floa
 @app.get("/")
 def root():
     return {"status": "ok"}
+
+
+@app.post("/explain")
+async def explain(req: ExplainRequest):
+    prompt = f"""You are an environmental fact-checker. A company made a sustainability pledge, and satellite data was used to verify it.
+
+Company: {req.company}
+Claim: {req.claim_summary or "A reforestation/sustainability pledge"}
+Location: {req.location}
+Claimed hectares: {req.claimed_hectares:,.0f} ha
+Period: {req.year_start}–{req.year_end}
+
+Satellite findings:
+- Average annual forest loss BEFORE pledge: {req.avg_loss_before_ha:,.0f} ha/yr
+- Average annual forest loss AFTER pledge: {req.avg_loss_after_ha:,.0f} ha/yr
+- Net reduction in loss: {req.reduction_ha:,.0f} ha
+- Truth Score: {req.truth_score}%
+- Verdict: {req.verdict}
+
+Write 2-3 sentences in plain English explaining what this data means and whether the company's claim holds up. Be direct and factual. Do not use bullet points or headers."""
+
+    response = await openai_client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "user", "content": prompt}],
+    )
+
+    return {"explanation": response.choices[0].message.content.strip()}
+
+
+@app.get("/search_claim/{company}")
+async def search_claim(company: str):
+    prompt = f"""Search the web for {company}'s most recent reforestation or tree planting sustainability commitment.
+
+Extract ONLY real, cited information. Return a JSON object with these fields:
+- "claim_summary": one sentence describing what they promised
+- "trees_or_hectares": the number (e.g. "1 million trees" or "500000 hectares")
+- "hectares": numeric estimate in hectares (convert if needed: 1 tree ≈ 0.001 ha, 1 acre = 0.4047 ha)
+- "location": the single most significant or largest location mentioned — if multiple regions, pick the primary one (e.g. "Cerrado, Brazil" not just "Brazil")
+- "year_start": the year the pledge was made (as integer)
+- "year_end": the target completion year (as integer)
+- "source_url": the URL where this information was found
+
+If any field cannot be found, set it to null. Return JSON only, no extra text."""
+
+    response = await openai_client.responses.create(
+        model="gpt-4o-mini",
+        tools=[{"type": "web_search_preview"}],
+        input=prompt,
+    )
+
+    raw = response.output_text.strip()
+
+    # Strip markdown code fences if present
+    if raw.startswith("```"):
+        raw = raw.split("```")[1]
+        if raw.startswith("json"):
+            raw = raw[4:]
+
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=500, detail=f"Failed to parse OpenAI response: {raw[:300]}")
+
+    # If model returned a list, take the first item
+    if isinstance(data, list):
+        if not data:
+            raise HTTPException(status_code=500, detail="OpenAI returned empty list")
+        data = data[0]
+
+    if not isinstance(data, dict):
+        raise HTTPException(status_code=500, detail=f"Unexpected response format: {type(data)}")
+
+    # Geocode the location to coordinates
+    coords = None
+    if data.get("location"):
+        try:
+            bbox = geocode_location(data["location"])
+            coords = {
+                "lat": (bbox["min_lat"] + bbox["max_lat"]) / 2,
+                "lon": (bbox["min_lon"] + bbox["max_lon"]) / 2,
+            }
+        except Exception:
+            pass
+
+    return {"company": company, **data, "coords": coords}
 
 
 @app.post("/verify")

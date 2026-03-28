@@ -4,7 +4,8 @@ import SearchIcon from "@mui/icons-material/Search";
 import SpaIcon from "@mui/icons-material/Spa";
 import gsap from "gsap";
 
-const CATCHPHRASE = "Don't take their word for it — Search any company to verify their environmental claims";
+const CATCHPHRASE =
+  "Don't take their word for it — Search any company to verify their environmental claims";
 
 const LandingPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -15,7 +16,7 @@ const LandingPage = () => {
     gsap.fromTo(
       wordsRef.current,
       { opacity: 0, y: 20 },
-      { opacity: 1, y: 0, duration: 0.5, stagger: 0.05, ease: "power2.out" }
+      { opacity: 1, y: 0, duration: 0.5, stagger: 0.05, ease: "power2.out" },
     );
   }, []);
 
@@ -25,20 +26,22 @@ const LandingPage = () => {
   };
 
   return (
-    <div className="h-screen w-full grid grid-rows-[auto_1fr] p-4">
-
+    <div className="h-screen w-full grid grid-rows-[auto_1fr]">
       {/* HEADER */}
-      <Link to="/" className="flex items-center gap-0.5">
-        <SpaIcon fontSize="small" className="text-emerald-800" />
-        <h1 className=" font-semibold text-xl text-emerald-800">GreenLens</h1>
-      </Link>{" "}
-      <div className="flex flex-col items-center justify-center gap-15">
-
-        <h1 className="p-8 text-6xl font-medium text-center">
+      <header className="border-b border-0.5 border-gray-300 p-4">
+        <Link to="/" className="flex items-center gap-0.5 w-fit">
+          <SpaIcon fontSize="small" className="text-emerald-800" />
+          <h1 className=" font-semibold text-xl text-emerald-800">GreenLens</h1>
+        </Link>{" "}
+      </header>
+      <div className="flex flex-col items-center justify-center gap-20 ">
+        <h1 className="px-12 text-6xl font-medium text-center">
           {CATCHPHRASE.split(" ").map((word, i) => (
             <span
               key={i}
-              ref={(el) => { wordsRef.current[i] = el; }}
+              ref={(el) => {
+                wordsRef.current[i] = el;
+              }}
               className="inline-block mr-[0.25em] opacity-0"
             >
               {word}
@@ -48,15 +51,15 @@ const LandingPage = () => {
 
         {/* SEARCH BOX */}
         <div className="flex items-center gap-1">
-          <div className="border border-gray-400 rounded-md flex items-center gap-0.5 px-2">
-            <SearchIcon fontSize="inherit" className="text-gray-400" />
+          <div className="border border-gray-300 rounded-md flex items-center gap-0.5 px-2">
+            <SearchIcon fontSize="inherit" className="text-gray-300" />
             <input
               type="text"
               placeholder="Enter Company Name..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-              className="focus:outline-none text-sm px-1 py-0.5 w-80"
+              className="focus:outline-none text-sm px-1 py-0.5 w-80 placeholder-gray-400"
             />
           </div>
 
@@ -69,8 +72,6 @@ const LandingPage = () => {
             Search
           </button>
         </div>
-
-
       </div>
     </div>
   );
