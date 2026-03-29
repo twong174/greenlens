@@ -215,11 +215,11 @@ def compute_truth_score(loss_rows: list, year_start: int, claimed_hectares: floa
     score = min(max((reduction / claimed_hectares) * 100, 0), 100)
 
     if score >= 80:
-        verdict = "verified"
+        verdict = "consistent"
     elif score >= 50:
-        verdict = "uncertain"
+        verdict = "inconclusive"
     else:
-        verdict = "likely_false"
+        verdict = "inconsistent"
 
     return {
         "avg_loss_before_ha": round(avg_before, 2),
@@ -248,7 +248,7 @@ async def explain(req: ExplainRequest):
             detail="Missing OPENAI_API_KEY in environment."
         )
 
-    prompt = f"""You are an environmental fact-checker. A company made a sustainability pledge, and satellite data was used to verify it.
+    prompt = f"""You are an environmental data analyst. A company made a sustainability pledge, and satellite forest-loss data was used to assess it.
 
 Company: {req.company}
 Claim: {req.claim_summary or "A reforestation/sustainability pledge"}
@@ -257,13 +257,13 @@ Claimed hectares: {req.claimed_hectares:,.0f} ha
 Period: {req.year_start}–{req.year_end}
 
 Satellite findings:
-- Average annual forest loss BEFORE pledge: {req.avg_loss_before_ha:,.0f} ha/yr
-- Average annual forest loss AFTER pledge: {req.avg_loss_after_ha:,.0f} ha/yr
-- Net reduction in loss: {req.reduction_ha:,.0f} ha
+- Average annual forest loss BEFORE pledge period: {req.avg_loss_before_ha:,.0f} ha/yr
+- Average annual forest loss AFTER pledge period: {req.avg_loss_after_ha:,.0f} ha/yr
+- Net change in loss: {req.reduction_ha:,.0f} ha
 - Truth Score: {req.truth_score}%
 - Verdict: {req.verdict}
 
-Write 2-3 sentences in plain English explaining what this data means and whether the company's claim holds up. Be direct and factual. Do not use bullet points or headers."""
+Write 2-3 sentences in plain English describing what the satellite data shows. Be honest that this data measures correlation, not causation — changes in forest loss in the region could reflect the company's efforts, but may also be influenced by factors outside their control such as natural disasters, drought, government policy changes, or broader land-use trends. Do not declare the company guilty or innocent. Do not use bullet points or headers."""
 
     try:
         response = await openai_client.chat.completions.create(

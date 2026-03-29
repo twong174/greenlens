@@ -9,12 +9,26 @@ const CompanyPage = () => {
   const [claim, setClaim] = useState<any>(null);
   const [verdict, setVerdict] = useState<any>(null);
   const [explanation, setExplanation] = useState<string | null>(null);
+  const [topSources, setTopSources] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!name) return;
     setLoading(true);
+
+    // Fire both in parallel — search_claim for the main flow, analyze-company for ranked sources
+    fetch(`http://localhost:8000/analyze-company`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ company: name }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        const ranked = data.ranked_sources ?? [];
+        setTopSources(ranked.slice(0, 3));
+      })
+      .catch(() => {});
 
     fetch(`http://localhost:8000/search_claim/${encodeURIComponent(name)}`)
       .then((res) => {
@@ -101,9 +115,9 @@ const CompanyPage = () => {
                       </p>
                       <p
                         className={`text-sm font-medium capitalize ${
-                          verdict.verdict === "verified"
+                          verdict.verdict === "consistent"
                             ? "text-green-600"
-                            : verdict.verdict === "uncertain"
+                            : verdict.verdict === "inconclusive"
                               ? "text-yellow-500"
                               : verdict.verdict === "insufficient_data"
                                 ? "text-gray-400"
@@ -184,6 +198,33 @@ const CompanyPage = () => {
                       </blockquote>
                     )}
                   </div>
+                  {topSources.length > 0 && (
+                    <div className="border-t border-gray-200 pt-4 flex flex-col gap-2">
+                      <p className="text-xs lg:text-lg tracking-tight uppercase font-medium">
+                        Top Sources
+                      </p>
+                      {topSources.map((s, i) => (
+                        <div key={i} className="flex items-start justify-between gap-2">
+                          <div className="flex flex-col gap-0.5 min-w-0">
+                            <a
+                              href={s.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-emerald-700 underline underline-offset-2 truncate"
+                            >
+                              {s.title ?? s.url}
+                            </a>
+                            {s.project_description && (
+                              <p className="text-xs text-gray-400 truncate">{s.project_description}</p>
+                            )}
+                          </div>
+                          <span className="text-xs text-gray-400 shrink-0">
+                            score {s.weighted_score}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </>
               ) : (
                 <p className="text-xs text-gray-400">No verdict data</p>
