@@ -3,9 +3,10 @@ import { Link, useNavigate } from "react-router-dom";
 import SearchIcon from "@mui/icons-material/Search";
 import SpaIcon from "@mui/icons-material/Spa";
 import gsap from "gsap";
+import topoBg from "../../assets/matthew-jackson-BWlzubEi1DU-unsplash.jpg";
 
 const CATCHPHRASE =
-  "Don't take their word for it — Search any company to verify their environmental claims";
+  "Don't take their word for it — search any company to verify their environmental claims";
 
 const LandingPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -26,16 +27,26 @@ const LandingPage = () => {
   };
 
   return (
-    <div className="h-screen w-full grid grid-rows-[auto_1fr]">
+    <div className="h-screen w-full grid grid-rows-[auto_1fr] relative bg-[#253D2C]">
+      <div
+        className="absolute inset-0 z-0"
+        style={{
+          backgroundImage: `url(${topoBg})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          opacity: 0.08,
+          filter: "grayscale(100%)",
+        }}
+      />
       {/* HEADER */}
-      <header className="border-b border-0.5 border-gray-300 p-4">
+      <header className="p-4 relative z-10 text-white">
         <Link to="/" className="flex items-center gap-0.5 w-fit">
-          <SpaIcon fontSize="small" className="text-emerald-800" />
-          <h1 className=" font-semibold text-xl text-emerald-800">GreenLens</h1>
-        </Link>{" "}
+          <SpaIcon fontSize="small" className="" />
+          <h1 className="font-semibold text-xl">GreenLens</h1>
+        </Link>
       </header>
-      <div className="flex flex-col items-center justify-center gap-20 ">
-        <h1 className="px-12 text-6xl font-medium text-center">
+      <div className="flex flex-col items-center justify-center gap-20 relative z-10">
+        <h1 className="px-12 lg:px-70 lg:text-7xl text-6xl font-medium text-center text-white">
           {CATCHPHRASE.split(" ").map((word, i) => (
             <span
               key={i}
@@ -50,27 +61,32 @@ const LandingPage = () => {
         </h1>
 
         {/* SEARCH BOX */}
-        <div className="flex items-center gap-1">
-          <div className="border border-gray-300 rounded-md flex items-center gap-0.5 px-2">
-            <SearchIcon fontSize="inherit" className="text-gray-300" />
-            <input
-              type="text"
-              placeholder="Enter Company Name..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-              className="focus:outline-none text-sm px-1 py-0.5 w-80 placeholder-gray-400"
-            />
-          </div>
+        <div className="flex flex-col items-center gap-3">
+          <p className="text-sm lg:text-lg font-light text-white text-center mb-2">
+            We cross-reference corporate pledges with real satellite data from Global Forest Watch
+          </p>
+          <div className="flex items-center gap-1">
+            <div className="border border-white/30 rounded-md flex items-center gap-1 px-3 py-2 bg-white/10">
+              <SearchIcon fontSize="small" className="text-white/50" />
+              <input
+                type="text"
+                placeholder="Enter Company Name..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                className="focus:outline-none text-base px-1 w-96 placeholder-white/40 text-white bg-transparent"
+              />
+            </div>
 
-          {/* SEARCH BUTTON */}
-          <button
-            type="submit"
-            onClick={handleSearch}
-            className="text-white bg-emerald-800 rounded-sm font-light px-2 py-1 cursor-pointer text-sm"
-          >
-            Search
-          </button>
+            {/* SEARCH BUTTON */}
+            <button
+              type="submit"
+              onClick={handleSearch}
+              className="text-[#253D2C] bg-white rounded-sm font-medium px-4 py-2 cursor-pointer text-base"
+            >
+              Search
+            </button>
+          </div>
         </div>
       </div>
     </div>

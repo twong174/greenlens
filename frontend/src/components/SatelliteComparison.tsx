@@ -1,7 +1,7 @@
 import { MapContainer, TileLayer } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 
-const ZOOM = 9;
+const ZOOM = 7;
 
 const ESRI_TILE = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
 const MODIS_TILE = (date: string) =>
@@ -21,8 +21,8 @@ const SatelliteComparison = ({ lat, lon, location, yearStart }: Props) => {
 
   return (
     <div className="flex flex-col gap-2 w-full h-full">
-      <div className="flex gap-4 w-full h-full">
-        <div className="flex-1 flex flex-col gap-1">
+      <div className="flex flex-col gap-2 w-full h-full">
+        <div className="flex-1 flex flex-col gap-1 min-h-0">
           <p className="text-xs font-medium text-gray-500">Before — {yearStart}</p>
           <MapContainer
             center={center}
@@ -35,7 +35,7 @@ const SatelliteComparison = ({ lat, lon, location, yearStart }: Props) => {
           </MapContainer>
         </div>
 
-        <div className="flex-1 flex flex-col gap-1">
+        <div className="flex-1 flex flex-col gap-1 min-h-0">
           <p className="text-xs font-medium text-gray-500">Current</p>
           <MapContainer
             center={center}
@@ -49,7 +49,7 @@ const SatelliteComparison = ({ lat, lon, location, yearStart }: Props) => {
         </div>
       </div>
       <p className="text-xs text-gray-400">
-        Satellite imagery: {location} — MODIS Terra (before) · ESRI World Imagery (current)
+        {location} — MODIS Terra (before) · ESRI World Imagery (current)
       </p>
     </div>
   );
