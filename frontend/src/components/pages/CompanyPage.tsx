@@ -62,11 +62,7 @@ const CompanyPage = () => {
         </Link>
       </div>
 
-      {loading && <SkeletonLoader />}
-      <div
-        className="grid grid-cols-2 gap-2 p-4 overflow-hidden"
-        style={{ display: loading ? "none" : "grid" }}
-      >
+      {loading ? <SkeletonLoader /> : <div className="grid grid-cols-2 gap-2 p-4 overflow-hidden">
         {/* LEFT: all info */}
         <div className="flex flex-col gap-3 overflow-hidden">
           {/* Company name + summary */}
@@ -157,7 +153,7 @@ const CompanyPage = () => {
             </div>
           )}
         </div>
-      </div>
+      </div>}
     </div>
   );
 };

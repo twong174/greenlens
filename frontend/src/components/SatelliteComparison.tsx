@@ -1,4 +1,5 @@
-import { MapContainer, TileLayer } from "react-leaflet";
+import { useEffect } from "react";
+import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 
 const ZOOM = 7;
@@ -6,6 +7,14 @@ const ZOOM = 7;
 const ESRI_TILE = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
 const MODIS_TILE = (date: string) =>
   `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/${date}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`;
+
+const MapResizer = () => {
+  const map = useMap();
+  useEffect(() => {
+    setTimeout(() => map.invalidateSize(), 100);
+  }, [map]);
+  return null;
+};
 
 interface Props {
   lat: number;
@@ -32,6 +41,7 @@ const SatelliteComparison = ({ lat, lon, location, yearStart }: Props) => {
             style={{ height: "100%", width: "100%", borderRadius: "8px" }}
           >
             <TileLayer url={MODIS_TILE(beforeDate)} />
+            <MapResizer />
           </MapContainer>
         </div>
 
@@ -45,6 +55,7 @@ const SatelliteComparison = ({ lat, lon, location, yearStart }: Props) => {
             style={{ height: "100%", width: "100%", borderRadius: "8px" }}
           >
             <TileLayer url={ESRI_TILE} />
+            <MapResizer />
           </MapContainer>
         </div>
       </div>
