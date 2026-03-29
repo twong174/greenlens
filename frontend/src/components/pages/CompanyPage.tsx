@@ -29,7 +29,7 @@ const CompanyPage = () => {
           body: JSON.stringify({
             company: name,
             claimed_hectares: claimData.hectares ?? 400000,
-            location: claimData.location ?? "Brazil",
+            location: claimData.primary_location ?? claimData.location ?? "Brazil",
             year_start: claimData.year_start ?? 2019,
             year_end: claimData.year_end ?? 2023,
           }),
